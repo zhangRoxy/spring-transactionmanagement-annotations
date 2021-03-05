@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+
+    <!--1.扫描包-->
+    <context:component-scan base-package="com.zrs.*"/>
+
+    <!--2.加载数据库信息文件-->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!--3.配置德鲁伊数据库连接池-->
+    <bean id="ds" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="url" value="${jdbc.url}"/>
+    </bean>
+
+    <!--4.配置MyBatis的sqlSession工厂  Spring框架管理了session
+       如果需要使用MyBatisPlus那么就把 SqlSessionFactoryBean 替换为  MybatisSqlSessionFactoryBean
+    -->
+    <bean id="sessionFactory" class="com.baomidou.mybatisplus.extension.spring.MybatisSqlSessionFactoryBean">
+        <property name="dataSource" ref="ds"/>
+        <!--指定Mapper的映射文件位置-->
+        <property name="mapperLocations" value="classpath:com/zrs/mapper/*.xml"/>
+        <!--指定实体类的别名-->
+        <property name="typeAliasesPackage" value="com.zrs.bean"/>
+        <!--配置MyBatisPlus的分页插件-->
+        <property name="plugins">
+            <array>
+                <bean class="com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor"/>
+            </array>
+        </property>
+    </bean>
+
+    <!--5.Spring框架扫描Mapper层接口，自动给Mapper层接口生成代理对象-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.zrs.mapper"/>
+    </bean>
+
+
+    <!--6.配置事务管理  事务：要么全部成功，要么全部失败！ 原子性、一致性、隔离性、持久性-->
+    <!--配置MyBatis的事务平台管理器-->
+    <bean id="dataSourcetransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!--注入数据源-->
+        <property name="dataSource" ref="ds"/>
+    </bean>
+
+    <!--
+        Spring的声明式事务目前有2种配置方式：
+           1.XML配置声明式事务 (过时 了解)
+           2.注解配置声明式事务 (推荐 掌握)
+    -->
+    <!--开启注解管理事务  注解配置声明式事务-->
+    <tx:annotation-driven transaction-manager="dataSourcetransactionManager"/>
+
+
+
+</beans>
